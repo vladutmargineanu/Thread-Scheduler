@@ -1,0 +1,75 @@
+ Nume: Margineanu Nicolae-Vladut
+ Grupă: 333CA
+
+ Tema 4 - Planificator de Threaduri
+
+  1. Organizare
+
+   Explicație pentru structura creată (sau soluția de ansamblu aleasă):
+   In rezolvarea temei, am implementat o coada ca o lista simplu inlantuita,
+   in care se adauga elementele dupa prioritate primita ca parametru. Intr-un 
+   nod se retine informatia pentru un thread, generic, prioritatea si adresa 
+   nodului urmator.
+   Pentru retinerea thread-urilor, am creat o structura litsa simplu inlantuita,
+   cu metode specifice. Informatia retinuta intr-un nod este:
+   valoarea unui thread, generic, pointer catre nodul urmator.
+   a) PriorityQueue - pentru initializare se apeleaza functia initPQueue().
+   Adaugarea in coada are complexitatea O(n), deoarece se parcurge toata coada
+   pentru compararea prioritatiilor fiecarui nod. Primul nod cu prioritatea mai
+   mica gasit, se introduce noul nod. La prioritati egale, se pastreaza ordinea
+   de introducere.
+   Eliminarea unui nod are complexitatea O(1), deoarece se scoate primul nod din
+   coada.
+   b) Planificatorul - am implementat structura de date pentru a retine datele
+   unui scheduler: so_scheduler. In structura so_thread se gasesc cele doua
+   semafoare binare care sunt folosite la blocarea thread-urilor.
+	Semaforul sem_wait -> blocheaza thread-ul in asteptarea planificarii acestuia
+	pe procesor.
+	Semaforul sem_create -> blocheaza thread-ul parinte pentru ca thread-ul copil
+	sa ajunga in starea ready.
+	PriorityQueue ready_threads -  coada cu thread-urile din ready
+	LinkedList *wait_threads - vector de liste in starea waiting
+	LinkedList finish_threads - lista cu thread-urile din finish
+	SO_THREAD running_thread - thread-ul activ in momentul executiei
+	sem_t sem_finish -  indica daca thread-urile au terminat, executia 
+						programului s-a sfarsit.
+	
+	Algoritmul dupa care s-a realizat planificarea
+	Pentru fiecare thread, se executa cate un caz pentru starea in care se
+	aflsa. Astfel, exista trei cazuri READY, TERMINATED si WAITING.
+	Cazul READY - dupa terminarea executiei unei instructiuni a unui thread,
+	acesta apeleaza planificatorul cu starea READY. Daca acesta are cea mai 
+	mare prioritate, isi contiuna executia. Daca exista un thread cu aceeasi
+	prioritate, ii cedeaza acestuia executia doar in cazul in care i-s expirat
+	cuanta de timp. Daca exista un thread cu prioritate mai mare, acesta este
+	scos din executie si inlocuit. In acest caz se face wait pe semaforul binare,
+	iar thread-ul cu prioritatea mai mare va face release pesemaforul binar.
+	Cazul WAITING - in acest caz, se adauga thread-urile in vectorul de liste 
+	pentru asteptare pentru replanificare la primirea semnalului unui dispozitiv 
+	io. Cand se apeleaza functia so_signal, se adauga toate thread-urile din lista 
+	cu indicele io, in coada de prioritati, in starea ready.
+	Cazul TERMINATED - in acest caz, un thread cand isi termina executia, este
+	adaugat in lista finish si se face relese pentru urmatorul thread. Daca nu mai
+	exista un alt thread, se elibereaza semaforul sem_finish, care indica finalul
+	executiei programului.
+
+  2. Implementare
+
+  Intregul enunt a fost implementat. Programul nu trece toate testele.
+  Ultimele doua teste au memory-leak-uri.
+
+  Pe parcursul temei am intampinat urmatoarele probleme:
+  a) Accesarea unei variabile nedeclarata.
+  b) Segmentation Fault din cauza accesarii unei variabile catre
+  a fost eliberate cu free()
+  c) Nu distrugeam semafoarele creeate, la sfarsitul executiei.
+
+  3. Cum se compilează și cum se rulează?
+  Cu ajutorul utilitarului Makefile. Acesta linkeaza urmatoarele fisiere:
+  so_scheduler.c, so_scheduler.h, so_priorityqueue.c, so_priorityqueue.h,
+  so_linkedlist.c, so_linkedlist.h, scheduler_struct.h, utils.h.
+
+  4. Bibliografie
+  - Laboratorul 8 si 9 SO
+  [https://ocw.cs.pub.ro/courses/so/laboratoare/laborator-08]
+  [https://ocw.cs.pub.ro/courses/so/laboratoare/laborator-09]
